@@ -1,6 +1,6 @@
-FROM python:alpine3.7
+FROM python:2.7-alpine
 
-    apk update && \
+RUN apk update && \
     apk add tzdata && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" >  /etc/timezone && \
@@ -8,7 +8,6 @@ FROM python:alpine3.7
     rm -r /var/cache/apk
 
 WORKDIR /app
-
 COPY requirements.txt /app
 RUN pip install -r requirements.txt
 COPY . /app

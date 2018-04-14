@@ -14,6 +14,7 @@ def process_new_chat_members(bot, update):
     new_chat_members = update.message.new_chat_members
     if not new_chat_members:
         return
+    chat = Chat.query.get(update.message.chat.id)
     for new_chat_member in new_chat_members:
         if new_chat_member.id == bot.id:
             chat = save_chat(update.message.chat)
@@ -31,24 +32,43 @@ def process_new_chat_members(bot, update):
                 chat_user.until_date = admin.until_date
                 chat.users.append(chat_user)
                 chat.save()
-    update.message.delete()
+
+    if chat.del_join_msg:
+        update.message.delete()
+
+
+def delete_message(bot, job):
+    bot.delete_message(*job.context)
 
 
 def process_documents(bot, update, job_queue):
-    message_type = ''
-    if update.message.sticker:
+    group_id = update.message.chat.id
+    chat = Chat.query.get(group_id)
+    if not chat:
+        bot.sendMessage(update.callback_query.chat.id, '无此群组')
+        return
+    message_type = '文件'
+    reply = None
+    if update.message.sticker and chat.fb_send_sticker:
         message_type = u'贴纸'
-    if update.message.document:
+        reply = update.message.reply_text(
+            '{} 请看群规。本群禁止发{}。'.format(
+                update.message.from_user.name,
+                message_type))
+        update.message.delete()
+    if update.message.document and chat.fb_send_doc:
         message_type = u'文件'
-    reply = update.message.reply_text(u'{} 请看群规。本群禁止发{}。'.format(
-        update.message.from_user.name, message_type))
-    update.message.delete()
+        reply = update.message.reply_text(
+            '{} 请看群规。本群禁止发{}。'.format(
+                update.message.from_user.name,
+                message_type))
+        update.message.delete()
 
-    def delete_message(bot, job):
-        bot.delete_message(*job.context)
-
-    job_queue.run_once(
-        delete_message, 3600, context=(reply.chat.id, reply.message_id))
+    if reply:
+        job_queue.run_once(
+            delete_message,
+            3600,
+            context=(reply.chat.id, reply.message_id))
 
 
 handlers = [
