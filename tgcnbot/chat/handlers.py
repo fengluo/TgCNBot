@@ -1,81 +1,126 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
                       ReplyKeyboardMarkup, KeyboardButton)
-from telegram.ext import (Filters, CommandHandler, CallbackQueryHandler,
-                          MessageHandler, ConversationHandler)
+from telegram.ext import (Filters, CommandHandler, CallbackQueryHandler)
 from tgcnbot.extensions import db
-from tgcnbot.chat.models import save_chat, get_chats, Chat, ChatUser
 from tgcnbot.user.models import save_user, User
+from tgcnbot.chat.models import Chat, ChatUser
+
+settings = {
+    'del_join_msg': '删除入群消息',
+    'fb_send_sticker': '禁止发贴纸',
+    'fb_send_doc': '禁止发文档'
+}
+
+values = {
+    0: '关闭',
+    1: '开启'
+}
 
 
-def process_new_chat_members(bot, update):
-    new_chat_members = update.message.new_chat_members
-    if not new_chat_members:
+def mygroups(bot, update):
+    from_user = None
+    if hasattr(update, 'message') and getattr(update, 'message'):
+        from_user = update.message.from_user
+    if hasattr(update, 'callback_query') and getattr(update, 'callback_query'):
+        from_user = update.callback_query.from_user
+    if not from_user:
         return
-    chat = Chat.query.get(update.message.chat.id)
-    for new_chat_member in new_chat_members:
-        if new_chat_member.id == bot.id:
-            chat = save_chat(update.message.chat)
-            admins = bot.getChatAdministrators(chat.id)
-            for admin in admins:
-                user = save_user(admin.user)
-                chat_user = ChatUser.query.filter(
-                    ChatUser.user_id == user.id,
-                    ChatUser.chat_id == chat.id).first()
-                if not chat_user:
-                    chat_user = ChatUser(
-                        chat=chat,
-                        user=user)
-                chat_user.status = admin.status
-                chat_user.until_date = admin.until_date
-                chat.users.append(chat_user)
-                chat.save()
+    user = User.query.get(from_user.id)  # 暂无群组
+    groups = Chat.query\
+        .filter(db.or_(Chat.type == 'group', Chat.type == 'supergroup'))\
+        .join(ChatUser, ChatUser.chat_id == Chat.id)\
+        .filter(ChatUser.user_id == user.id)\
+        .all()
+    content = u'选择群组'
+    buttons = []
+    for index, group in enumerate(groups):
+        button = InlineKeyboardButton(
+            group.title, callback_data='group:{}'.format(group.id))
+        if index % 2 == 0:
+            button_row = [button, ]
+            buttons.append(button_row)
+        else:
+            buttons[int(index / 2)].append(button)
 
-    if chat.del_join_msg:
-        update.message.delete()
-
-
-def delete_message(bot, job):
-    bot.delete_message(*job.context)
+    if hasattr(update, 'message') and getattr(update, 'message'):
+        update.message.reply_text(
+            content, reply_markup=InlineKeyboardMarkup(buttons))
+    if hasattr(update, 'callback_query') and getattr(update, 'callback_query'):
+        update.callback_query.edit_message_text(
+            content, reply_markup=InlineKeyboardMarkup(buttons))
 
 
-def process_documents(bot, update, job_queue):
-    group_id = update.message.chat.id
+def group_settings(bot, update):
+    group_id = update.callback_query.data.split('group:')[-1]
+    chat = Chat.query.get(group_id)
+    if not chat:
+        bot.sendMessage(update.callback_query.chat.id, '无此群组')
+    content = '{} 群组设置'.format(chat.title)
+    buttons = [
+        [
+            InlineKeyboardButton(
+                settings['del_join_msg'],
+                callback_data='group:{}:del_join_msg'.format(group_id)),
+            InlineKeyboardButton(
+                settings['fb_send_sticker'],
+                callback_data='group:{}:fb_send_sticker'.format(group_id))],
+        [
+            InlineKeyboardButton(
+                settings['fb_send_doc'],
+                callback_data='group:{}:fb_send_doc'.format(group_id)), ],
+        [
+            InlineKeyboardButton(
+                '« 返回群组列表',
+                callback_data='mygroups'), ],
+    ]
+
+    update.callback_query.edit_message_text(
+        text=content,
+        reply_markup=InlineKeyboardMarkup(buttons))
+    return 2
+
+
+def process_group_setting(bot, update):
+    group_id = next(
+        iter(re.findall(r":(-\d*)", update.callback_query.data)), None)
+    key = next(
+        iter(re.findall(r":([a-z]\w*)", update.callback_query.data)), None)
+    value = next(iter(re.findall(r":(\d)", update.callback_query.data)), None)
     chat = Chat.query.get(group_id)
     if not chat:
         bot.sendMessage(update.callback_query.chat.id, '无此群组')
         return
-    message_type = '文件'
-    reply = None
-    if update.message.sticker and chat.fb_send_sticker:
-        message_type = u'贴纸'
-        reply = update.message.reply_text(
-            '{} 请看群规。本群禁止发{}。'.format(
-                update.message.from_user.name,
-                message_type))
-        update.message.delete()
-    if update.message.document and chat.fb_send_doc:
-        message_type = u'文件'
-        reply = update.message.reply_text(
-            '{} 请看群规。本群禁止发{}。'.format(
-                update.message.from_user.name,
-                message_type))
-        update.message.delete()
-
-    if reply:
-        job_queue.run_once(
-            delete_message,
-            3600,
-            context=(reply.chat.id, reply.message_id))
+    if hasattr(chat, key) and value is not None:
+        setattr(chat, key, value)
+        chat.save()
+    content = '{} {}: {}'.format(
+        chat.title,
+        settings.get(key),
+        values.get(int(getattr(chat, key) or 0)))
+    buttons = [
+        [
+            InlineKeyboardButton(
+                values.get(int(not int(getattr(chat, key) or 0))),
+                callback_data='group:{}:{}:{}'.format(
+                    group_id,
+                    key,
+                    int(not int(getattr(chat, key) or 0)))), ],
+        [InlineKeyboardButton(
+            '« 返回设置', callback_data='group:{}'.format(group_id)), ]
+    ]
+    update.callback_query.edit_message_text(
+        text=content,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    return 1
 
 
 handlers = [
-    MessageHandler(
-        Filters.group & Filters.status_update.new_chat_members,
-        process_new_chat_members),
-    MessageHandler(
-        Filters.group & (Filters.document | Filters.sticker),
-        process_documents, pass_job_queue=True),
-]
+    CommandHandler('mygroups', mygroups),
+    CallbackQueryHandler(mygroups, pattern='mygroups'),
+    CallbackQueryHandler(process_group_setting, pattern='^group:-(\d*):(\w*)'),
+    CallbackQueryHandler(group_settings, pattern='^group:-(\d*)'), ]
