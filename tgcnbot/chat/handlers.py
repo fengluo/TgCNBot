@@ -88,7 +88,7 @@ def process_group_setting(bot, update):
     group_id = next(
         iter(re.findall(r":(-\d*)", update.callback_query.data)), None)
     key = next(
-        iter(re.findall(r":([a-z]\w*)", update.callback_query.data)), None)
+        iter(re.findall(r":([a-z_]+)", update.callback_query.data)), None)
     value = next(iter(re.findall(r":(\d)", update.callback_query.data)), None)
     chat = Chat.query.get(group_id)
     if not chat:
