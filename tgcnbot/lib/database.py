@@ -8,6 +8,7 @@
 """
 from __future__ import with_statement, absolute_import
 from future.utils import iteritems
+from past.builtins import basestring
 import re
 import uuid
 #from math import ceil
