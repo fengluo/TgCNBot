@@ -30,7 +30,8 @@ class Vote(db.Model, CRUDMixin):
     id = db.Column(db.Integer, primary_key=True)
     chat_id = db.Column(db.Integer)
     message_id = db.Column(db.Integer)
-    # Todo target_id and message_id
+    target_message_id = db.Column(db.Integer)
+    target_user_id = db.Column(db.Integer)
     text = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -39,6 +40,13 @@ class Vote(db.Model, CRUDMixin):
         primaryjoin="Chat.id == Vote.chat_id",
         foreign_keys='Vote.chat_id',
         backref='votes')
+
+    target_user = db.relationship(
+        'User',
+        primaryjoin='User.id == Vote.target_user_id',
+        foreign_keys='Vote.target_user_id',
+        backref='target_votes'
+    )
     
     users = db.relationship(
         'User',

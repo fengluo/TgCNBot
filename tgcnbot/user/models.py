@@ -7,6 +7,7 @@ def save_user(user_data):
     user = User.query.get(user_data.id)
     if not user:
         user = User(id=user_data.id)
+    user.name = user_data.name
     user.username = user_data.username
     user.first_name = user_data.first_name
     user.last_name = user_data.last_name
@@ -17,6 +18,7 @@ def save_user(user_data):
 
 class User(db.Model, CRUDMixin):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
     username = db.Column(db.String(50))
     first_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
