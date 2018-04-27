@@ -37,17 +37,17 @@ def report(bot, update, job_queue):
         ChatUser.chat_id == chat_id,
         ChatUser.user_id == target_user_id
     ).first()
-    # if chat_user and chat_user.status in ['administrator', 'creator']:
-    #     reply = update.message.reply_text(
-    #         '{} 无法举报管理员'.format(
-    #             update.message.from_user.name))
-    #     update.message.delete()
-    #     if reply:
-    #         job_queue.run_once(
-    #             delete_message,
-    #             10,
-    #             context=(reply.chat.id, reply.message_id))
-    #     return
+    if chat_user and chat_user.status in ['administrator', 'creator']:
+        reply = update.message.reply_text(
+            '{} 无法举报管理员'.format(
+                update.message.from_user.name))
+        update.message.delete()
+        if reply:
+            job_queue.run_once(
+                delete_message,
+                10,
+                context=(reply.chat.id, reply.message_id))
+        return
     vote = Vote.query.filter(
         Vote.chat_id == chat_id,
         Vote.target_message_id == target_message_id).first()
