@@ -44,7 +44,19 @@ def report(bot, update, job_queue):
         target_message_id=target_message_id,
         text=text)
     vote.save()
-    content = "该消息被举报，下面进入表决。"
+    content = \
+        """
+该消息被举报，下面进入表决。
+Bot 将会统计5分钟内的投票。
+
+Spam 消息：被举报成员将会被 Bot 踢出群组；
+违反群规：被举报成员将会被禁言10小时；
+取消表决：该举报无效。
+
+任一投票选项需要至少3票才能被算作有效。
+滥用者会被管理员踢出群组。
+管理员对此结果拥有最终解释权和懒得解释权。
+"""
     buttons = [
         [
             InlineKeyboardButton(
@@ -61,6 +73,7 @@ def report(bot, update, job_queue):
         chat_id=update.message.chat.id,
         reply_to_message_id=update.message.reply_to_message.message_id,
         text=content,
+        parse_mode='html',
         reply_markup=InlineKeyboardMarkup(buttons))
 
     vote.message_id = message.message_id
@@ -68,7 +81,7 @@ def report(bot, update, job_queue):
     update.message.delete()
     job_queue.run_once(
         result,
-        10,
+        300,
         context=vote.id)
 
 
@@ -113,25 +126,25 @@ def result(bot, job):
         bot.restrict_chat_member(
             chat_id=vote.chat_id,
             user_id=vote.target_user_id,
-            until_date=datetime.now()+timedelta(hours=12),
+            until_date=datetime.now()+timedelta(hours=10),
             can_send_messages=False,
             can_send_media_messages=False,
             can_send_other_messages=False,
         )
     results = {
         'spam': 'Spam 消息\n该用户将被踢出群组。',
-        'break': '违反群规\n该用户将被禁言12小时。',
+        'break': '违反群规\n该用户将被禁言10小时。',
         'cancel': ' 取消表决'
     }
     content = \
         """
-    对 {} 所发消息投票统计如下：\n
-    1. Spam 消息 {}票\n
-    2. 违反群规 {}票\n
-    3. 取消表决 {}票\n
-    投票结果为：{}\n
-    管理员对此结果拥有最终解释权和懒得解释权。
-    """.format(
+对 {} 所发消息投票统计如下：\n
+1. Spam 消息 {}票\n
+2. 违反群规 {}票\n
+3. 取消表决 {}票\n
+投票结果为：{}\n
+管理员对此结果拥有最终解释权和懒得解释权。
+""".format(
             vote.target_user.name,
             spam_tickets_num,
             break_tickets_num,
