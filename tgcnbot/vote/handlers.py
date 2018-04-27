@@ -7,10 +7,11 @@ from telegram.ext import (Filters, CommandHandler, CallbackQueryHandler,
                           MessageHandler, ConversationHandler)
 from tgcnbot.vote.models import Vote, Joiner
 from tgcnbot.user.models import save_user
+from tgcnbot.chat.models import ChatUser
+from tgcnbot.extensions import db
 
 
 def report(bot, update, job_queue):
-    print(update.message)
     reply_to_message = update.message.reply_to_message
     if not reply_to_message:
         # Todo
@@ -32,6 +33,21 @@ def report(bot, update, job_queue):
     target_user_id = reply_to_message.from_user.id
     text = reply_to_message.text
     target_user = save_user(reply_to_message.from_user)
+    chat_user = ChatUser.query.filter(
+        ChatUser.chat_id == chat_id,
+        ChatUser.user_id == target_user_id
+    ).first()
+    # if chat_user and chat_user.status in ['administrator', 'creator']:
+    #     reply = update.message.reply_text(
+    #         '{} 无法举报管理员'.format(
+    #             update.message.from_user.name))
+    #     update.message.delete()
+    #     if reply:
+    #         job_queue.run_once(
+    #             delete_message,
+    #             10,
+    #             context=(reply.chat.id, reply.message_id))
+    #     return
     vote = Vote.query.filter(
         Vote.chat_id == chat_id,
         Vote.target_message_id == target_message_id).first()
@@ -160,6 +176,7 @@ def result(bot, job):
 
 
 def vote(bot, update):
+    print(update.callback_query)
     reply_to_message = update.callback_query.message.reply_to_message
     callback_data = update.callback_query.data
     chat_id = reply_to_message.chat.id
@@ -184,23 +201,38 @@ def vote(bot, update):
         joiner.ticket = report_type
         joiner.save()
 
-    vote = Vote.query.filter(
-        Vote.chat_id == chat_id,
-        Vote.target_message_id == target_message_id).first()
+    db.session.flush()
+    # vote = Vote.query.filter(
+    #     Vote.chat_id == chat_id,
+    #     Vote.target_message_id == target_message_id).first()
 
     for joiner in vote.joiners:
         print(joiner.vote_id, joiner.user_id, joiner.ticket)
-
+    spam_tickets_num = Joiner.query.filter(
+        Joiner.vote_id == vote.id,
+        Joiner.ticket == 'spam'
+    ).count()
+    break_tickets_num = Joiner.query.filter(
+        Joiner.vote_id == vote.id,
+        Joiner.ticket == 'break'
+    ).count()
+    cancel_tickets_num = Joiner.query.filter(
+        Joiner.vote_id == vote.id,
+        Joiner.ticket == 'cancel'
+    ).count()
+    print('spam ', spam_tickets_num)
+    print('break ', break_tickets_num)
+    print('cancel ', cancel_tickets_num)
     buttons = [
         [
             InlineKeyboardButton(
-                'Spam 消息 {}'.format(len(vote.spam_tickets)),
+                'Spam 消息 {}'.format(spam_tickets_num),
                 callback_data='report:spam'),
             InlineKeyboardButton(
-                '违反群规 {}'.format(len(vote.break_tickets)),
+                '违反群规 {}'.format(break_tickets_num),
                 callback_data='report:break'),
             InlineKeyboardButton(
-                '取消表决 {}'.format(len(vote.cancel_tickets)),
+                '取消表决 {}'.format(cancel_tickets_num),
                 callback_data='report:cancel')],
     ]
     update.callback_query.edit_message_reply_markup(

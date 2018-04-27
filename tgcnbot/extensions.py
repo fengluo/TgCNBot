@@ -3,6 +3,7 @@ import os
 import logging
 
 from tgcnbot.lib.database import SQLAlchemy
+from sqlalchemy.pool import SingletonThreadPool
 
 
 # Enable logging
@@ -12,4 +13,5 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-db = SQLAlchemy('sqlite:////{}/data/tgcnbot.db'.format(os.getcwd()))
+db = SQLAlchemy('sqlite:////{}/data/tgcnbot.db'.format(os.getcwd()),
+                poolclass=SingletonThreadPool)

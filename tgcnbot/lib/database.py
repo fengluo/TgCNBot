@@ -24,6 +24,7 @@ from sqlalchemy.orm.interfaces import MapperExtension, SessionExtension, \
 from sqlalchemy.orm.exc import UnmappedClassError
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 from sqlalchemy.util import to_list
+from sqlalchemy.pool import QueuePool
 from .signals import Namespace
 
 from .cache import cached_property
@@ -332,7 +333,7 @@ class SQLAlchemy(object):
     """
 
     def __init__(self, engine_url, echo=False, pool_recycle=7200, pool_size=10,
-                 session_extensions=None, session_options=None):
+                 session_extensions=None, session_options=None, poolclass=QueuePool):
         # create signals sender
         self.sender = str(uuid.uuid4())
 
@@ -342,7 +343,7 @@ class SQLAlchemy(object):
         self.Model = self.make_declarative_base()
 
         self.engine = sqlalchemy.create_engine(
-            engine_url, echo=echo, pool_recycle=pool_recycle)
+            engine_url, echo=echo, pool_recycle=pool_recycle, poolclass=poolclass)
 
         _include_sqlalchemy(self)
 
