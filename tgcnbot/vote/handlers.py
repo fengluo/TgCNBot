@@ -25,7 +25,7 @@ def report(bot, update, job_queue):
                 10,
                 context=(reply.chat.id, reply.message_id))
         return
-    #Todo 把这里整理出方法
+    # Todo 把这里整理出方法
     chat_id = reply_to_message.chat.id
     # message_id = update.message.message_id
     target_message_id = reply_to_message.message_id
@@ -71,21 +71,30 @@ def report(bot, update, job_queue):
         10,
         context=vote.id)
 
+
 def delete_message(bot, job):
     bot.delete_message(*job.context, timeout=10)
 
+
 def result(bot, job):
     vote = Vote.query.get(job.context)
+    vote.status = 0
+    vote.save()
     spam_tickets_num = len(vote.spam_tickets)
     break_tickets_num = len(vote.break_tickets)
     cancel_tickets_num = len(vote.cancel_tickets)
     total_tickets_num = len(vote.joiners)
     ratios = {}
     if total_tickets_num:
-        ratios['spam'] = int(spam_tickets_num / total_tickets_num)
-        ratios['break'] = int(break_tickets_num / total_tickets_num)
-        ratios['cancel'] = int(cancel_tickets_num / total_tickets_num)
-        ticket_name = max(ratios.items(), key=operator.itemgetter(1))[0]
+        if spam_tickets_num >= 3:
+            ratios['spam'] = int(spam_tickets_num / total_tickets_num)
+        if break_tickets_num >= 3:
+            ratios['break'] = int(break_tickets_num / total_tickets_num)
+        if cancel_tickets_num >= 3:
+            ratios['cancel'] = int(cancel_tickets_num / total_tickets_num)
+        ticket_name = 'cancel'
+        if len(ratios.items()) > 0:
+            ticket_name = max(ratios.items(), key=operator.itemgetter(1))[0]
     else:
         ticket_name = 'cancel'
     if ticket_name == 'spam':
@@ -115,7 +124,7 @@ def result(bot, job):
         'cancel': ' 取消表决'
     }
     content = \
-    """
+        """
     对 {} 所发消息投票统计如下：\n
     1. Spam 消息 {}票\n
     2. 违反群规 {}票\n
@@ -123,17 +132,18 @@ def result(bot, job):
     投票结果为：{}\n
     管理员对此结果拥有最终解释权和懒得解释权。
     """.format(
-        vote.target_user.name,
-        spam_tickets_num,
-        break_tickets_num,
-        cancel_tickets_num,
-        results[ticket_name])
+            vote.target_user.name,
+            spam_tickets_num,
+            break_tickets_num,
+            cancel_tickets_num,
+            results[ticket_name])
     print(content)
     bot.editMessageText(
         chat_id=vote.chat_id,
         message_id=vote.message_id,
         text=content
     )
+
 
 def vote(bot, update):
     reply_to_message = update.callback_query.message.reply_to_message
@@ -143,11 +153,10 @@ def vote(bot, update):
     vote = Vote.query.filter(
         Vote.chat_id == chat_id,
         Vote.target_message_id == target_message_id).first()
-    if not vote:
+    if not vote or not vote.status:
         return
     user = save_user(update.callback_query.from_user)
     report_type = next(iter(re.findall(r":([a-z]+)", callback_data)), None)
-
 
     joiner = Joiner.query.filter(
         Joiner.user == user,
@@ -167,8 +176,8 @@ def vote(bot, update):
 
     for joiner in vote.joiners:
         print(joiner.vote_id, joiner.user_id, joiner.ticket)
-    
-    buttons=[
+
+    buttons = [
         [
             InlineKeyboardButton(
                 'Spam 消息 {}'.format(len(vote.spam_tickets)),
