@@ -2,7 +2,7 @@ import os
 
 from telegram.ext import (Updater, CommandHandler)
 
-from tgcnbot import system, chat, user, message
+from tgcnbot import system, chat, user, message, vote
 from tgcnbot.extensions import logger, db
 
 
@@ -28,6 +28,9 @@ def run(token=None):
         dp.add_handler(handler)
 
     for handler in user.handlers:
+        dp.add_handler(handler)
+    
+    for handler in vote.handlers:
         dp.add_handler(handler)
 
     dp.add_error_handler(error_handler)
