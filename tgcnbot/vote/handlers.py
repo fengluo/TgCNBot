@@ -31,6 +31,7 @@ def report(bot, update, job_queue):
     target_message_id = reply_to_message.message_id
     target_user_id = reply_to_message.from_user.id
     text = reply_to_message.text
+    target_user = save_user(reply_to_message.from_user)
     vote = Vote.query.filter(
         Vote.chat_id == chat_id,
         Vote.target_message_id == target_message_id).first()
