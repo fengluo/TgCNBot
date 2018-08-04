@@ -47,6 +47,7 @@ class Chat(db.Model, CRUDMixin):
     del_join_msg = db.Column(db.Integer, default=0)
     fb_send_sticker = db.Column(db.Integer, default=0)
     fb_send_doc = db.Column(db.Integer, default=0)
+    fb_send_forward = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

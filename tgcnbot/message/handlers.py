@@ -38,7 +38,7 @@ def delete_message(bot, job):
     bot.delete_message(*job.context)
 
 
-def process_documents(bot, update, job_queue):
+def process_filter_message(bot, update, job_queue):
     group_id = update.message.chat.id
     chat = Chat.query.get(group_id)
     if not chat:
@@ -60,6 +60,13 @@ def process_documents(bot, update, job_queue):
                 update.message.from_user.name,
                 message_type))
         update.message.delete()
+    if update.message.forward_from_message_id and chat.fb_send_forward:
+        message_type = '转发内容'
+        reply = update.message.reply_text(
+            '{} 请看群规。本群禁止发{}。'.format(
+                update.message.from_user.name,
+                message_type))
+        update.message.delete()
 
     if reply:
         job_queue.run_once(
@@ -73,6 +80,6 @@ handlers = [
         Filters.group & Filters.status_update.new_chat_members,
         process_new_chat_members),
     MessageHandler(
-        Filters.group & (Filters.document | Filters.sticker),
-        process_documents, pass_job_queue=True)
+        Filters.group & (Filters.document | Filters.sticker | Filters.forwarded),
+        process_filter_message, pass_job_queue=True)
 ]

@@ -12,7 +12,8 @@ from tgcnbot.chat.models import Chat, ChatUser
 settings = {
     'del_join_msg': '删除入群消息',
     'fb_send_sticker': '禁止发贴纸',
-    'fb_send_doc': '禁止发文档'
+    'fb_send_doc': '禁止发文档',
+    'fb_send_forward': '禁止发转发',
 }
 
 values = {
@@ -67,11 +68,16 @@ def group_settings(bot, update):
                 callback_data='group:{}:del_join_msg'.format(group_id)),
             InlineKeyboardButton(
                 settings['fb_send_sticker'],
-                callback_data='group:{}:fb_send_sticker'.format(group_id))],
+                callback_data='group:{}:fb_send_sticker'.format(group_id))
+        ],
         [
             InlineKeyboardButton(
                 settings['fb_send_doc'],
-                callback_data='group:{}:fb_send_doc'.format(group_id)), ],
+                callback_data='group:{}:fb_send_doc'.format(group_id)), 
+            InlineKeyboardButton(
+                settings['fb_send_forward'],
+                callback_data='group:{}:fb_send_forward'.format(group_id))
+        ],
         [
             InlineKeyboardButton(
                 '« 返回群组列表',
