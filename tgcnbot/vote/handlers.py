@@ -122,7 +122,7 @@ def result(bot, job):
             ratios['break'] = float(break_tickets_num / total_tickets_num)
         if spam_tickets_num >= 3:
             ratios['spam'] = float(spam_tickets_num / total_tickets_num)
-                ticket_name = 'cancel'
+        ticket_name = 'cancel'
         if len(ratios.items()) > 0:
             ticket_name = max(ratios.items(), key=operator.itemgetter(1))[0]
     else:
