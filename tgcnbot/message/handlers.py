@@ -71,7 +71,7 @@ def process_filter_message(bot, update, job_queue):
     if reply:
         job_queue.run_once(
             delete_message,
-            3600,
+            15,
             context=(reply.chat.id, reply.message_id))
 
 
