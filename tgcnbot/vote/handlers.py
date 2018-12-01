@@ -10,6 +10,7 @@ from tgcnbot.user.models import save_user
 from tgcnbot.chat.models import ChatUser
 from tgcnbot.extensions import db
 
+VOTE_TIME = 300
 
 def report(bot, update, job_queue):
     reply_to_message = update.message.reply_to_message
@@ -98,12 +99,15 @@ Spam 消息：被举报成员将会被 Bot 踢出群组；
     update.message.delete()
     job_queue.run_once(
         result,
-        300,
+        VOTE_TIME,
         context=vote.id)
-
+    job_queue.run_once(
+        delete_message,
+        VOTE_TIME+15,
+        context=(vote.chat_id, vote.message_id))
 
 def delete_message(bot, job):
-    bot.delete_message(*job.context, timeout=10)
+    bot.delete_message(*job.context)
 
 
 def result(bot, job):
@@ -167,7 +171,6 @@ def result(bot, job):
             break_tickets_num,
             cancel_tickets_num,
             results[ticket_name])
-    print(content)
     bot.editMessageText(
         chat_id=vote.chat_id,
         message_id=vote.message_id,
@@ -176,7 +179,6 @@ def result(bot, job):
 
 
 def vote(bot, update):
-    print(update.callback_query)
     reply_to_message = update.callback_query.message.reply_to_message
     callback_data = update.callback_query.data
     chat_id = reply_to_message.chat.id
@@ -220,9 +222,6 @@ def vote(bot, update):
         Joiner.vote_id == vote.id,
         Joiner.ticket == 'cancel'
     ).count()
-    print('spam ', spam_tickets_num)
-    print('break ', break_tickets_num)
-    print('cancel ', cancel_tickets_num)
     buttons = [
         [
             InlineKeyboardButton(
