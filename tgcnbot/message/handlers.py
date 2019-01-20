@@ -74,6 +74,27 @@ def process_filter_message(bot, update, job_queue):
             15,
             context=(reply.chat.id, reply.message_id))
 
+# The temporary function
+def process_filter_photo(bot, update, job_queue):
+    group_id = update.message.chat.id
+    chat = Chat.query.get(group_id)
+    if not chat:
+        bot.sendMessage(update.callback_query.chat.id, '无此群组')
+        return
+    reply = None
+    caption = update.message.caption
+    if 'ais65' in caption or '增粉' in caption:
+        reply = update.message.reply_text(
+            '{} 发现敏感内容。'.format(
+                update.message.from_user.name))
+        bot.kick_chat_member(group_id, update.message.from_user.id)
+        update.message.delete()
+    if reply:
+        job_queue.run_once(
+            delete_message,
+            15,
+            context=(reply.chat.id, reply.message_id))
+
 
 handlers = [
     MessageHandler(
@@ -81,5 +102,8 @@ handlers = [
         process_new_chat_members),
     MessageHandler(
         Filters.group & (Filters.document | Filters.sticker | Filters.forwarded),
-        process_filter_message, pass_job_queue=True)
+        process_filter_message, pass_job_queue=True),
+    MessageHandler(
+        Filters.group & Filters.photo,
+        process_filter_photo, pass_job_queue=True)
 ]
