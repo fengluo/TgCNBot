@@ -89,7 +89,7 @@ def process_filter_photo(bot, update, job_queue):
             '{} 发现敏感内容。'.format(
                 message.from_user.name))
         bot.kick_chat_member(group_id, message.from_user.id)
-        essage.delete()
+        message.delete()
     if reply:
         job_queue.run_once(
             delete_message,
