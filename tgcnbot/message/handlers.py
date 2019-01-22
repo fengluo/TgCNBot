@@ -42,7 +42,7 @@ def process_filter_message(bot, update, job_queue):
     group_id = update.message.chat.id
     chat = Chat.query.get(group_id)
     if not chat:
-        bot.sendMessage(update.callback_query.chat.id, '无此群组')
+        bot.sendMessage(group_id, '请重新加 bot 到群组')
         return
     message_type = '文件'
     reply = None
@@ -76,19 +76,20 @@ def process_filter_message(bot, update, job_queue):
 
 # The temporary function
 def process_filter_photo(bot, update, job_queue):
-    group_id = update.message.chat.id
+    message = update.message or update.edited_message
+    group_id = message.chat.id
     chat = Chat.query.get(group_id)
     if not chat:
-        bot.sendMessage(update.callback_query.chat.id, '无此群组')
+        bot.sendMessage(group_id, '请重新加 bot 到群组')
         return
     reply = None
-    caption = update.message.caption
-    if '://ais' in caption or '增粉' in caption:
-        reply = update.message.reply_text(
+    caption = message.caption
+    if caption and ('://ais' in caption or '增粉' in caption):
+        reply = message.reply_text(
             '{} 发现敏感内容。'.format(
-                update.message.from_user.name))
-        bot.kick_chat_member(group_id, update.message.from_user.id)
-        update.message.delete()
+                message.from_user.name))
+        bot.kick_chat_member(group_id, message.from_user.id)
+        essage.delete()
     if reply:
         job_queue.run_once(
             delete_message,
@@ -105,5 +106,5 @@ handlers = [
         process_filter_message, pass_job_queue=True),
     MessageHandler(
         Filters.group & Filters.photo,
-        process_filter_photo, pass_job_queue=True)
+        process_filter_photo, pass_job_queue=True, edited_updates=True)
 ]
