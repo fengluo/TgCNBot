@@ -84,7 +84,7 @@ def process_filter_photo(bot, update, job_queue):
         return
     reply = None
     caption = message.caption
-    if caption and ('://ais' in caption or '增粉' in caption):
+    if caption and ('://ais' in caption or 'www.ais' in caption or '增粉' in caption):
         reply = message.reply_text(
             '{} 发现敏感内容。'.format(
                 message.from_user.name))
