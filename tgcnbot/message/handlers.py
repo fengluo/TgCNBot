@@ -118,7 +118,7 @@ handlers = [
         Filters.group & Filters.status_update.new_chat_members,
         process_new_chat_members),
     MessageHandler(
-        Filters.group & (Filters.document | Filters.sticker | Filters.forwarded),
+        Filters.group & (Filters.document | Filters.sticker),
         process_filter_message, pass_job_queue=True),
     MessageHandler(
         Filters.group & (Filters.photo | Filters.forwarded),
