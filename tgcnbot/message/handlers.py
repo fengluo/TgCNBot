@@ -1,3 +1,4 @@
+import re
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
                       ReplyKeyboardMarkup, KeyboardButton)
 from telegram.ext import (Filters, CommandHandler, CallbackQueryHandler,
@@ -15,6 +16,7 @@ def process_new_chat_members(bot, update):
     for new_chat_member in new_chat_members:
         if new_chat_member.id == bot.id:
             chat = save_chat(update.message.chat)
+            print(chat.id)
             admins = bot.getChatAdministrators(chat.id)
             for admin in admins:
                 user = save_user(admin.user)
@@ -74,6 +76,18 @@ def process_filter_message(bot, update, job_queue):
             15,
             context=(reply.chat.id, reply.message_id))
 
+
+def check_content(content):
+    forbidden_words = [
+        '://ais',
+        'www.ais',
+        '增粉',
+        '拉粉'
+    ]
+    def filter_word(word):
+        return re.search(word, content)
+    return len(list(filter(filter_word, forbidden_words)))
+
 # The temporary function
 def process_filter_photo(bot, update, job_queue):
     message = update.message or update.edited_message
@@ -84,7 +98,9 @@ def process_filter_photo(bot, update, job_queue):
         return
     reply = None
     caption = message.caption
-    if caption and ('://ais' in caption or 'www.ais' in caption or '增粉' in caption):
+
+    if caption and check_content(caption) or \
+        update.edited_message and update.edited_message.caption and update.edited_message.caption.startswith('http://t.cn'):
         reply = message.reply_text(
             '{} 发现敏感内容。'.format(
                 message.from_user.name))
