@@ -121,6 +121,6 @@ handlers = [
         Filters.group & (Filters.document | Filters.sticker | Filters.forwarded),
         process_filter_message, pass_job_queue=True),
     MessageHandler(
-        Filters.group & Filters.photo,
+        Filters.group & (Filters.photo | Filters.forwarded),
         process_filter_photo, pass_job_queue=True, edited_updates=True)
 ]
