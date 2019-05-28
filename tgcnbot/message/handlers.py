@@ -82,7 +82,8 @@ def check_content(content):
         '://ais',
         'www.ais',
         '增粉',
-        '拉粉'
+        '拉粉',
+        'XackerTVHD'
     ]
     def filter_word(word):
         return re.search(word, content)
