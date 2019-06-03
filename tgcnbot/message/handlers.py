@@ -83,6 +83,8 @@ def check_content(content):
         'www.ais',
         '增粉',
         '拉粉',
+        '加粉',
+        '炸群',
         'XackerTVHD'
     ]
     def filter_word(word):
