@@ -84,7 +84,10 @@ def check_content(content):
         '拉粉',
         '加粉',
         '炸群',
-        'XackerTVHD'
+        'XackerTVHD',
+        'ad84',
+        '交友粉',
+        '科技引流'
     ]
     def filter_word(word):
         return re.search(word, content)
