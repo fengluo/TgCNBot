@@ -16,7 +16,6 @@ def process_new_chat_members(bot, update):
     for new_chat_member in new_chat_members:
         if new_chat_member.id == bot.id:
             chat = save_chat(update.message.chat)
-            print(chat.id)
             admins = bot.getChatAdministrators(chat.id)
             for admin in admins:
                 user = save_user(admin.user)
