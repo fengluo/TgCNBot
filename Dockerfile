@@ -1,4 +1,4 @@
-FROM python:alpine3.7
+FROM node:12-alpine
 
 RUN apk update && \
     apk add tzdata && \
@@ -8,8 +8,7 @@ RUN apk update && \
     rm -r /var/cache/apk
 
 WORKDIR /app
-COPY requirements.txt /app
-RUN pip install -r requirements.txt
+COPY package*.json /app
+RUN npm install --production
 COPY . /app
-
-CMD ["python", "-m", "tgcnbot"]
+CMD ["npm", "run", "start"]
