@@ -8,7 +8,7 @@ RUN apk update && \
     rm -r /var/cache/apk
 
 WORKDIR /app
-COPY package*.json /app
+COPY package*.json /app/
 RUN npm install --production
 COPY . /app
 CMD ["npm", "run", "start"]
