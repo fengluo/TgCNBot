@@ -6,7 +6,7 @@ const checkContent = require('./keyword');
 const bot = new Telegraf(config.telegram.token)
 bot.start(ctx => ctx.reply('I\'m @tgcnbot '))
 bot.on('new_chat_members', async ctx => {
-  if(ctx.message.chat.id === ctx.botInfo.id){
+  if(ctx.message.new_chat_member.id === ctx.botInfo.id){
     const chatInfo = {
       del_join_msg: 1,
       fb_send_sticker: 0,
@@ -31,7 +31,17 @@ bot.on('new_chat_members', async ctx => {
   }
 
   try {
-    await ctx.deleteMessage(ctx.message.message_id)
+    const name = `${ctx.message.new_chat_member.first_name} ${ctx.message.new_chat_member.last_name}`
+    if(checkContent(name, 'name')){
+      await ctx.kickChatMember(ctx.message.new_chat_member.id)
+    }
+  } catch (error) {
+    console.log(error)
+    console.log(ctx.message.new_chat_member)
+  }
+  
+  try {
+    await ctx.deleteMessage(ctx.message.message_id);
   } catch (error) {
     console.log(error)
   }

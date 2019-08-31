@@ -1,4 +1,4 @@
-module.exports = function checkContent(content){
+module.exports = function checkContent(content, type='message'){
   const forbiddenWords = [
     '://ais',
     'www.ais',
@@ -11,9 +11,16 @@ module.exports = function checkContent(content){
     'ad83',
     'ad82',
     '交友粉',
-    '科技引流'
+    '科技引流',
+    'hch677'
   ]
-  const checkRe = new RegExp(forbiddenWords.join('|'))
+  const forbiddenWordsForName = [
+    'Deleted Account',
+    '反水',
+    '分红',
+    '炸群'
+  ]
+  const checkRe = type === 'message' ? new RegExp(forbiddenWords.join('|')) : new RegExp(forbiddenWordsForName.join('|'))
   return checkRe.test(content)
 }
 
