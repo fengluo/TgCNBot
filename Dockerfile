@@ -9,6 +9,6 @@ RUN apk update && \
 
 WORKDIR /app
 COPY package*.json /app/
-RUN npm install --production
+RUN npm install pm2 knex -g && npm install --production
 COPY . /app
-CMD ["npm", "run", "start"]
+CMD [ "pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
