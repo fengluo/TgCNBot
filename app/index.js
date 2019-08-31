@@ -1,6 +1,7 @@
 const config = require('../config');
 const Telegraf = require('telegraf')
 const Model = require('./common/model');
+const checkContent = require('./keyword');
 
 const bot = new Telegraf(config.telegram.token)
 bot.start(ctx => ctx.reply('I\'m @tgcnbot '))
@@ -32,15 +33,36 @@ bot.on('new_chat_members', async ctx => {
   try {
     await ctx.deleteMessage(ctx.message.message_id)
   } catch (error) {
-    if(error.code === 400) {
-      await ctx.reply('Please grant me the permission of admin')
-    }
+    console.log(error)
   }
 })
-// bot.on(
-//   ['text', 'photo', 'forward', 'edited_message'],
-//   async ctx => {
-    
-//   }
-// );
+bot.on(
+  ['text', 'edited_message','photo', 'forward'],
+  async ctx => {
+    const message = ctx.message || ctx.editedMessage
+    const content = message.text || message.caption
+    if(checkContent(content)){
+      try {
+        const resp = await ctx.reply(
+          `[${message.from.first_name} ${message.from.last_name}](tg://user?id=${message.from.id}) 发现敏感内容`,
+          {
+            reply_to_message_id: message.message_id,
+            parse_mode: 'Markdown'
+          }
+        )
+        setTimeout(
+          async ()=>{await ctx.deleteMessage(resp.message_id)},
+          3000
+        )
+        await ctx.deleteMessage(message.message_id)
+        await ctx.kickChatMember(message.from.id)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  }
+);
+bot.catch((err) => {
+  console.log('Ooops', err)
+})
 bot.launch()

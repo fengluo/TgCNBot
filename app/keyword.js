@@ -1,5 +1,5 @@
-module.exports = function check_content(content){
-  const forbidden_words = [
+module.exports = function checkContent(content){
+  const forbiddenWords = [
     '://ais',
     'www.ais',
     '增粉',
@@ -8,11 +8,13 @@ module.exports = function check_content(content){
     '炸群',
     'XackerTVHD',
     'ad84',
+    'ad83',
+    'ad82',
     '交友粉',
     '科技引流'
   ]
-  const checkRe = new RegExp(forbidden_words.join('|'))
+  const checkRe = new RegExp(forbiddenWords.join('|'))
   return checkRe.test(content)
 }
 
-console.log(check_content('我要炸群拉粉'))
+// console.log(checkContent('我要炸群拉粉'))
