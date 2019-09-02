@@ -15,12 +15,11 @@ module.exports = function checkContent(content, type='message'){
     'hch677',
     'wodeai.cn'
   ]
-  const forbiddenWordsForName = [
+  const forbiddenWordsForName = forbiddenWords.concat([
     'Deleted Account',
     '反水',
-    '分红',
-    '炸群'
-  ]
+    '分红'
+  ])
   const checkRe = type === 'message' ? new RegExp(forbiddenWords.join('|')) : new RegExp(forbiddenWordsForName.join('|'))
   return checkRe.test(content)
 }
