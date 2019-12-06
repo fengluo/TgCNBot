@@ -13,7 +13,8 @@ module.exports = function checkContent(content, type='message'){
     '交友粉',
     '科技引流',
     'hch677',
-    'wodeai.cn'
+    'wodeai.cn',
+    '精准粉'
   ]
   const forbiddenWordsForName = forbiddenWords.concat([
     'Deleted Account',
