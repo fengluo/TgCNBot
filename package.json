@@ -23,7 +23,7 @@
   "homepage": "https://github.com/fengluo/TgCNBot#readme",
   "dependencies": {
     "dotenv": "^8.1.0",
-    "knex": "^0.19.2",
+    "knex": "^2.4.0",
     "sqlite3": "^4.1.0",
     "telegraf": "^3.32.0"
   },
